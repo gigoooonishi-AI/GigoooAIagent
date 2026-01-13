@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SalesDashboard from './src/SalesDashboard';
+import Button from './src/components/Button';
+import MessageComponent from './src/components/Message';
+import AgentCard from './src/components/AgentCard';
+import ThinkingIndicator from './src/components/ThinkingIndicator';
+import ChatInput from './src/components/ChatInput';
 
 interface Message {
   id: string;
@@ -178,13 +183,6 @@ const AIAgentService: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   return (
     <div style={styles.container}>
       {/* サイドバー */}
@@ -200,25 +198,15 @@ const AIAgentService: React.FC = () => {
         <div style={styles.agentList}>
           <h3 style={styles.sectionTitle}>利用可能なエージェント</h3>
           {agents.map((agent) => (
-            <div
+            <AgentCard
               key={agent.id}
+              id={agent.id}
+              name={agent.name}
+              description={agent.description}
+              status={agent.status}
+              isSelected={selectedAgent === agent.id}
               onClick={() => setSelectedAgent(agent.id)}
-              style={{
-                ...styles.agentCard,
-                ...(selectedAgent === agent.id ? styles.agentCardActive : {}),
-              }}
-            >
-              <div style={styles.agentHeader}>
-                <span style={styles.agentName}>{agent.name}</span>
-                <span
-                  style={{
-                    ...styles.statusDot,
-                    backgroundColor: agent.status === 'active' ? '#10b981' : '#6b7280',
-                  }}
-                />
-              </div>
-              <p style={styles.agentDescription}>{agent.description}</p>
-            </div>
+            />
           ))}
         </div>
 
@@ -243,86 +231,39 @@ const AIAgentService: React.FC = () => {
             {agents.find(a => a.id === selectedAgent)?.name}
           </h2>
           <div style={styles.headerActions}>
-            <button
-              style={styles.salesButton}
+            <Button
+              variant="success"
               onClick={() => setShowSalesDashboard(true)}
               title="営業ダッシュボード"
             >
               💼 営業機能
-            </button>
-            <button style={styles.iconButton}>⚙️</button>
-            <button style={styles.iconButton}>📊</button>
+            </Button>
+            <Button variant="icon">⚙️</Button>
+            <Button variant="icon">📊</Button>
           </div>
         </div>
 
         <div style={styles.messagesContainer}>
           {messages.map((message) => (
-            <div
+            <MessageComponent
               key={message.id}
-              style={{
-                ...styles.messageWrapper,
-                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              }}
-            >
-              <div
-                style={{
-                  ...styles.message,
-                  ...(message.role === 'user' ? styles.userMessage : {}),
-                  ...(message.role === 'system' ? styles.systemMessage : {}),
-                }}
-              >
-                <div style={styles.messageHeader}>
-                  <span style={styles.messageRole}>
-                    {message.role === 'user' ? '👤 あなた' :
-                     message.role === 'system' ? '🔔 システム' : '🤖 AI'}
-                  </span>
-                  <span style={styles.messageTime}>
-                    {message.timestamp.toLocaleTimeString('ja-JP', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-                <p style={styles.messageContent}>{message.content}</p>
-              </div>
-            </div>
+              role={message.role}
+              content={message.content}
+              timestamp={message.timestamp}
+            />
           ))}
 
-          {isThinking && (
-            <div style={styles.messageWrapper}>
-              <div style={{ ...styles.message, ...styles.thinkingMessage }}>
-                <div style={styles.thinkingDots}>
-                  <span style={styles.dot}>●</span>
-                  <span style={styles.dot}>●</span>
-                  <span style={styles.dot}>●</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {isThinking && <ThinkingIndicator />}
 
           <div ref={messagesEndRef} />
         </div>
 
-        <div style={styles.inputContainer}>
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="メッセージを入力... (Enterで送信、Shift+Enterで改行)"
-            style={styles.input}
-            rows={3}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isThinking}
-            style={{
-              ...styles.sendButton,
-              ...((!inputValue.trim() || isThinking) ? styles.sendButtonDisabled : {}),
-            }}
-          >
-            送信 ✈️
-          </button>
-        </div>
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSendMessage}
+          disabled={isThinking}
+        />
       </div>
 
       {/* 営業ダッシュボード */}
@@ -373,39 +314,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '12px',
     letterSpacing: '0.05em',
   },
-  agentCard: {
-    padding: '12px',
-    marginBottom: '8px',
-    backgroundColor: '#374151',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    border: '2px solid transparent',
-  },
-  agentCardActive: {
-    backgroundColor: '#4b5563',
-    borderColor: '#3b82f6',
-  },
-  agentHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '4px',
-  },
-  agentName: {
-    fontSize: '14px',
-    fontWeight: '600',
-  },
-  statusDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-  },
-  agentDescription: {
-    fontSize: '12px',
-    color: '#9ca3af',
-    margin: 0,
-  },
   stats: {
     padding: '16px',
     borderTop: '1px solid #374151',
@@ -451,26 +359,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     gap: '8px',
   },
-  iconButton: {
-    padding: '8px 12px',
-    backgroundColor: '#f3f4f6',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    transition: 'background-color 0.2s',
-  },
-  salesButton: {
-    padding: '8px 16px',
-    backgroundColor: '#10b981',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '600',
-    transition: 'background-color 0.2s',
-  },
   messagesContainer: {
     flex: 1,
     overflowY: 'auto' as const,
@@ -478,91 +366,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '16px',
-  },
-  messageWrapper: {
-    display: 'flex',
-    width: '100%',
-  },
-  message: {
-    maxWidth: '70%',
-    padding: '12px 16px',
-    borderRadius: '12px',
-    backgroundColor: '#f3f4f6',
-  },
-  userMessage: {
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-  },
-  systemMessage: {
-    backgroundColor: '#fef3c7',
-    color: '#92400e',
-    maxWidth: '100%',
-  },
-  messageHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '4px',
-    fontSize: '12px',
-    opacity: 0.8,
-  },
-  messageRole: {
-    fontWeight: '600',
-  },
-  messageTime: {
-    fontSize: '11px',
-  },
-  messageContent: {
-    margin: 0,
-    lineHeight: '1.5',
-    whiteSpace: 'pre-wrap' as const,
-  },
-  thinkingMessage: {
-    backgroundColor: '#f3f4f6',
-    padding: '16px',
-  },
-  thinkingDots: {
-    display: 'flex',
-    gap: '4px',
-    justifyContent: 'center',
-  },
-  dot: {
-    fontSize: '8px',
-    animation: 'pulse 1.4s ease-in-out infinite',
-    color: '#6b7280',
-  },
-  inputContainer: {
-    padding: '24px',
-    borderTop: '1px solid #e5e7eb',
-    display: 'flex',
-    gap: '12px',
-    backgroundColor: '#fff',
-  },
-  input: {
-    flex: 1,
-    padding: '12px 16px',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    resize: 'none' as const,
-    outline: 'none',
-  },
-  sendButton: {
-    padding: '12px 24px',
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    whiteSpace: 'nowrap' as const,
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#9ca3af',
-    cursor: 'not-allowed',
   },
 };
 
