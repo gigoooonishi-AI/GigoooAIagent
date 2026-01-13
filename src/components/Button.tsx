@@ -7,7 +7,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'success' | 'icon';
   type?: 'button' | 'submit' | 'reset';
   title?: string;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -17,38 +17,17 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   type = 'button',
   title,
-  style,
+  className = '',
 }) => {
-  const baseStyles: React.CSSProperties = {
-    padding: '8px 12px',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontSize: '14px',
-    fontWeight: '600',
-    transition: 'background-color 0.2s',
-    ...style,
-  };
+  const baseClasses = 'px-3 py-2 border-none rounded-md font-semibold transition-colors duration-200';
 
-  const variantStyles: Record<string, React.CSSProperties> = {
-    primary: {
-      backgroundColor: disabled ? '#9ca3af' : '#3b82f6',
-      color: '#fff',
-    },
-    secondary: {
-      backgroundColor: '#f3f4f6',
-      color: '#374151',
-    },
-    success: {
-      backgroundColor: '#10b981',
-      color: '#fff',
-      padding: '8px 16px',
-    },
-    icon: {
-      backgroundColor: '#f3f4f6',
-      fontSize: '16px',
-      fontWeight: 'normal',
-    },
+  const variantClasses: Record<string, string> = {
+    primary: disabled
+      ? 'bg-gray-400 text-white cursor-not-allowed'
+      : 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer',
+    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer',
+    success: 'px-4 py-2 bg-emerald-500 text-white hover:bg-emerald-600 cursor-pointer',
+    icon: 'bg-gray-100 text-base font-normal hover:bg-gray-200 cursor-pointer',
   };
 
   return (
@@ -57,7 +36,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      style={{ ...baseStyles, ...variantStyles[variant] }}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
     >
       {children}
     </button>

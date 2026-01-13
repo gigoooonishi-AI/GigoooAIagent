@@ -184,19 +184,19 @@ const AIAgentService: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="flex h-screen bg-gray-50">
       {/* サイドバー */}
-      <div style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
+      <div className="w-80 bg-gray-800 text-white flex flex-col border-r border-gray-700">
+        <div className="p-6 border-b border-gray-700 flex justify-center items-center">
           <img
             src="/assets/gigooo-logo.png"
             alt="GIGOOO"
-            style={styles.logoImage}
+            className="w-full max-w-[200px] h-auto"
           />
         </div>
 
-        <div style={styles.agentList}>
-          <h3 style={styles.sectionTitle}>利用可能なエージェント</h3>
+        <div className="flex-1 p-4 overflow-y-auto">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase mb-3 tracking-wider">利用可能なエージェント</h3>
           {agents.map((agent) => (
             <AgentCard
               key={agent.id}
@@ -210,27 +210,27 @@ const AIAgentService: React.FC = () => {
           ))}
         </div>
 
-        <div style={styles.stats}>
-          <div style={styles.statItem}>
-            <span style={styles.statLabel}>総メッセージ</span>
-            <span style={styles.statValue}>
+        <div className="p-4 border-t border-gray-700 flex gap-4">
+          <div className="flex-1 flex flex-col gap-1">
+            <span className="text-[11px] text-gray-400 uppercase">総メッセージ</span>
+            <span className="text-xl font-bold">
               {Object.values(agentChats).reduce((sum, chat) => sum + chat.length, 0)}
             </span>
           </div>
-          <div style={styles.statItem}>
-            <span style={styles.statLabel}>このチャット</span>
-            <span style={styles.statValue}>{messages.length}</span>
+          <div className="flex-1 flex flex-col gap-1">
+            <span className="text-[11px] text-gray-400 uppercase">このチャット</span>
+            <span className="text-xl font-bold">{messages.length}</span>
           </div>
         </div>
       </div>
 
       {/* メインチャットエリア */}
-      <div style={styles.mainContent}>
-        <div style={styles.header}>
-          <h2 style={styles.headerTitle}>
+      <div className="flex-1 flex flex-col bg-white">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white">
+          <h2 className="m-0 text-xl font-semibold text-gray-900">
             {agents.find(a => a.id === selectedAgent)?.name}
           </h2>
-          <div style={styles.headerActions}>
+          <div className="flex gap-2">
             <Button
               variant="success"
               onClick={() => setShowSalesDashboard(true)}
@@ -243,7 +243,7 @@ const AIAgentService: React.FC = () => {
           </div>
         </div>
 
-        <div style={styles.messagesContainer}>
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
           {messages.map((message) => (
             <MessageComponent
               key={message.id}
@@ -272,101 +272,6 @@ const AIAgentService: React.FC = () => {
       )}
     </div>
   );
-};
-
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    display: 'flex',
-    height: '100vh',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    backgroundColor: '#f9fafb',
-  },
-  sidebar: {
-    width: '320px',
-    backgroundColor: '#1f2937',
-    color: '#fff',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: '1px solid #374151',
-  },
-  sidebarHeader: {
-    padding: '24px',
-    borderBottom: '1px solid #374151',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoImage: {
-    width: '100%',
-    maxWidth: '200px',
-    height: 'auto',
-  },
-  agentList: {
-    flex: 1,
-    padding: '16px',
-    overflowY: 'auto' as const,
-  },
-  sectionTitle: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#9ca3af',
-    textTransform: 'uppercase' as const,
-    marginBottom: '12px',
-    letterSpacing: '0.05em',
-  },
-  stats: {
-    padding: '16px',
-    borderTop: '1px solid #374151',
-    display: 'flex',
-    gap: '16px',
-  },
-  statItem: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  statLabel: {
-    fontSize: '11px',
-    color: '#9ca3af',
-    textTransform: 'uppercase' as const,
-  },
-  statValue: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-  },
-  mainContent: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    backgroundColor: '#fff',
-  },
-  header: {
-    padding: '16px 24px',
-    borderBottom: '1px solid #e5e7eb',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  headerTitle: {
-    margin: 0,
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#111827',
-  },
-  headerActions: {
-    display: 'flex',
-    gap: '8px',
-  },
-  messagesContainer: {
-    flex: 1,
-    overflowY: 'auto' as const,
-    padding: '24px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-  },
 };
 
 export default AIAgentService;

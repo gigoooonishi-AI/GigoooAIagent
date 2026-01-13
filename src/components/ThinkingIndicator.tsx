@@ -1,36 +1,13 @@
 import React from 'react';
 
 const ThinkingIndicator: React.FC = () => {
-  const wrapperStyle: React.CSSProperties = {
-    display: 'flex',
-    width: '100%',
-  };
-
-  const messageStyle: React.CSSProperties = {
-    backgroundColor: '#f3f4f6',
-    padding: '16px',
-    borderRadius: '12px',
-  };
-
-  const dotsStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '4px',
-    justifyContent: 'center',
-  };
-
-  const dotStyle: React.CSSProperties = {
-    fontSize: '8px',
-    animation: 'pulse 1.4s ease-in-out infinite',
-    color: '#6b7280',
-  };
-
   return (
-    <div style={wrapperStyle}>
-      <div style={messageStyle}>
-        <div style={dotsStyle}>
-          <span style={dotStyle}>●</span>
-          <span style={dotStyle}>●</span>
-          <span style={dotStyle}>●</span>
+    <div className="flex w-full">
+      <div className="bg-gray-100 p-4 rounded-xl">
+        <div className="flex gap-1 justify-center">
+          <span className="thinking-dot text-[8px] text-gray-500">●</span>
+          <span className="thinking-dot text-[8px] text-gray-500">●</span>
+          <span className="thinking-dot text-[8px] text-gray-500">●</span>
         </div>
       </div>
     </div>

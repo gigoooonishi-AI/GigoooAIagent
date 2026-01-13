@@ -23,33 +23,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const containerStyle: React.CSSProperties = {
-    padding: '24px',
-    borderTop: '1px solid #e5e7eb',
-    display: 'flex',
-    gap: '12px',
-    backgroundColor: '#fff',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '12px 16px',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    resize: 'none',
-    outline: 'none',
-  };
-
   return (
-    <div style={containerStyle}>
+    <div className="p-6 border-t border-gray-200 flex gap-3 bg-white">
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyPress={handleKeyPress}
         placeholder={placeholder}
-        style={inputStyle}
+        className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-[inherit] resize-none outline-none"
         rows={3}
         disabled={disabled}
       />

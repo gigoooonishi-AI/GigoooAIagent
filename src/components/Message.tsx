@@ -7,52 +7,17 @@ interface MessageProps {
 }
 
 const Message: React.FC<MessageProps> = ({ role, content, timestamp }) => {
-  const messageWrapperStyle: React.CSSProperties = {
-    display: 'flex',
-    width: '100%',
-    justifyContent: role === 'user' ? 'flex-end' : 'flex-start',
-  };
+  const wrapperClasses = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
 
-  const messageStyle: React.CSSProperties = {
-    maxWidth: role === 'system' ? '100%' : '70%',
-    padding: '12px 16px',
-    borderRadius: '12px',
-    backgroundColor:
-      role === 'user'
-        ? '#3b82f6'
-        : role === 'system'
-        ? '#fef3c7'
-        : '#f3f4f6',
-    color:
-      role === 'user'
-        ? '#fff'
-        : role === 'system'
-        ? '#92400e'
-        : '#374151',
-  };
-
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '4px',
-    fontSize: '12px',
-    opacity: 0.8,
-  };
-
-  const roleStyle: React.CSSProperties = {
-    fontWeight: '600',
-  };
-
-  const timeStyle: React.CSSProperties = {
-    fontSize: '11px',
-  };
-
-  const contentStyle: React.CSSProperties = {
-    margin: 0,
-    lineHeight: '1.5',
-    whiteSpace: 'pre-wrap',
-  };
+  const messageClasses = `${
+    role === 'system' ? 'max-w-full' : 'max-w-[70%]'
+  } px-4 py-3 rounded-xl ${
+    role === 'user'
+      ? 'bg-blue-500 text-white'
+      : role === 'system'
+      ? 'bg-amber-100 text-amber-900'
+      : 'bg-gray-100 text-gray-700'
+  }`;
 
   const getRoleLabel = () => {
     switch (role) {
@@ -66,18 +31,18 @@ const Message: React.FC<MessageProps> = ({ role, content, timestamp }) => {
   };
 
   return (
-    <div style={messageWrapperStyle}>
-      <div style={messageStyle}>
-        <div style={headerStyle}>
-          <span style={roleStyle}>{getRoleLabel()}</span>
-          <span style={timeStyle}>
+    <div className={wrapperClasses}>
+      <div className={messageClasses}>
+        <div className="flex justify-between items-center mb-1 text-xs opacity-80">
+          <span className="font-semibold">{getRoleLabel()}</span>
+          <span className="text-[11px]">
             {timestamp.toLocaleTimeString('ja-JP', {
               hour: '2-digit',
               minute: '2-digit',
             })}
           </span>
         </div>
-        <p style={contentStyle}>{content}</p>
+        <p className="m-0 leading-6 whitespace-pre-wrap">{content}</p>
       </div>
     </div>
   );
