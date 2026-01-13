@@ -3,6 +3,7 @@ from flask_cors import CORS
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from sales_features import SalesFeatures
 
 # 環境変数をロード
 load_dotenv()
@@ -12,6 +13,9 @@ CORS(app)  # CORSを有効化してReactからのアクセスを許可
 
 # OpenAIクライアントを初期化
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+# 営業機能を初期化
+sales = SalesFeatures(client)
 
 # エージェントごとのシステムプロンプト
 AGENT_PROMPTS = {
@@ -88,6 +92,107 @@ def get_agents():
         {'id': 'creative', 'name': 'クリエイティブ', 'description': '創造的なコンテンツ生成'},
     ]
     return jsonify({'agents': agents})
+
+# 営業機能エンドポイント
+
+@app.route('/api/sales/leads', methods=['POST'])
+def analyze_leads():
+    """見込み客管理"""
+    try:
+        data = request.json
+        lead_data = data.get('lead_data', {})
+        action = data.get('action', 'analyze')
+
+        result = sales.manage_leads(lead_data, action)
+
+        return jsonify({
+            'success': True,
+            'analysis': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/sales/progress', methods=['POST'])
+def track_progress():
+    """進捗管理"""
+    try:
+        data = request.json
+        deal_info = data.get('deal_info', {})
+
+        result = sales.track_progress(deal_info)
+
+        return jsonify({
+            'success': True,
+            'analysis': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/sales/inquiry', methods=['POST'])
+def handle_inquiry():
+    """問い合わせ対応"""
+    try:
+        data = request.json
+        inquiry_text = data.get('inquiry', '')
+        context = data.get('context', '')
+
+        result = sales.handle_inquiry(inquiry_text, context)
+
+        return jsonify({
+            'success': True,
+            'response': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/sales/proposal', methods=['POST'])
+def generate_proposal():
+    """提案資料自動作成"""
+    try:
+        data = request.json
+        client_info = data.get('client_info', {})
+        product_info = data.get('product_info', {})
+
+        result = sales.generate_proposal(client_info, product_info)
+
+        return jsonify({
+            'success': True,
+            'proposal': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/sales/coach', methods=['POST'])
+def sales_coaching():
+    """営業コーチ機能"""
+    try:
+        data = request.json
+        situation = data.get('situation', '')
+        question = data.get('question', '')
+
+        result = sales.sales_coaching(situation, question)
+
+        return jsonify({
+            'success': True,
+            'advice': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     # 環境変数のチェック

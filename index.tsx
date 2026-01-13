@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import SalesDashboard from './src/SalesDashboard';
 
 interface Message {
   id: string;
@@ -61,6 +62,7 @@ const AIAgentService: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string>('general');
   const [isThinking, setIsThinking] = useState(false);
+  const [showSalesDashboard, setShowSalesDashboard] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 現在選択されているエージェントのメッセージを取得
@@ -223,6 +225,13 @@ const AIAgentService: React.FC = () => {
             {agents.find(a => a.id === selectedAgent)?.name}
           </h2>
           <div style={styles.headerActions}>
+            <button
+              style={styles.salesButton}
+              onClick={() => setShowSalesDashboard(true)}
+              title="営業ダッシュボード"
+            >
+              💼 営業機能
+            </button>
             <button style={styles.iconButton}>⚙️</button>
             <button style={styles.iconButton}>📊</button>
           </div>
@@ -297,6 +306,11 @@ const AIAgentService: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 営業ダッシュボード */}
+      {showSalesDashboard && (
+        <SalesDashboard onClose={() => setShowSalesDashboard(false)} />
+      )}
     </div>
   );
 };
@@ -426,6 +440,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '16px',
+    transition: 'background-color 0.2s',
+  },
+  salesButton: {
+    padding: '8px 16px',
+    backgroundColor: '#10b981',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
     transition: 'background-color 0.2s',
   },
   messagesContainer: {
