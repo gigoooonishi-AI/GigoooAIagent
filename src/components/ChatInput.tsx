@@ -1,5 +1,4 @@
-import React from 'react';
-import Button from './Button';
+import React, { KeyboardEvent } from 'react';
 
 interface ChatInputProps {
   value: string;
@@ -14,33 +13,38 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   disabled = false,
-  placeholder = 'メッセージを入力... (Enterで送信、Shift+Enterで改行)',
+  placeholder = 'メッセージを入力...',
 }) => {
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      if (!disabled && value.trim()) {
+        onSend();
+      }
     }
   };
 
   return (
-    <div className="p-6 border-t border-gray-200 flex gap-3 bg-white">
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder={placeholder}
-        className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-[inherit] resize-none outline-none"
-        rows={3}
-        disabled={disabled}
-      />
-      <Button
-        onClick={onSend}
-        disabled={!value.trim() || disabled}
-        variant="primary"
-      >
-        送信 ✈️
-      </Button>
+    <div className="input-container">
+      <div className="input-wrapper">
+        <textarea
+          className="chat-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={1}
+        />
+        <button
+          className="send-button"
+          onClick={onSend}
+          disabled={disabled || !value.trim()}
+          title="送信"
+        >
+          ➤
+        </button>
+      </div>
     </div>
   );
 };
