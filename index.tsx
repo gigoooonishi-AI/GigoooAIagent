@@ -21,6 +21,11 @@ const AIAgentService: React.FC = () => {
     { id: 'code', name: '営業', description: '顧客とのやり取り', status: 'idle' },
     { id: 'analysis', name: '社内スキル検索', description: 'スキルシート参照', status: 'idle' },
     { id: 'creative', name: 'クリエイティブ', description: '創造的なコンテンツ生成', status: 'idle' },
+    { id: 'leads', name: '見込み客管理', description: '優先度分析・アクション提案', status: 'idle' },
+    { id: 'progress', name: '進捗管理', description: 'ボトルネック特定・対策提案', status: 'idle' },
+    { id: 'inquiry', name: '問い合わせ対応', description: '回答案自動作成', status: 'idle' },
+    { id: 'proposal', name: '提案資料作成', description: '提案書の自動生成', status: 'idle' },
+    { id: 'coach', name: '営業コーチ', description: 'アドバイス・ベストプラクティス', status: 'idle' },
   ];
 
   // 各エージェントごとにチャット履歴を保存
@@ -54,6 +59,46 @@ const AIAgentService: React.FC = () => {
         id: '4',
         role: 'system',
         content: 'クリエイティブAIです。創造的なコンテンツ生成をサポートします。どのようにお手伝いできますか?',
+        timestamp: new Date(),
+      },
+    ],
+    leads: [
+      {
+        id: '5',
+        role: 'system',
+        content: '見込み客管理エージェントです。リード情報を分析し、優先度判定やネクストアクションを提案します。会社名、担当者、ニーズなどを教えてください。',
+        timestamp: new Date(),
+      },
+    ],
+    progress: [
+      {
+        id: '6',
+        role: 'system',
+        content: '進捗管理エージェントです。案件の進捗状況を分析し、ボトルネックの特定や対策を提案します。案件名、ステージ、課題などを教えてください。',
+        timestamp: new Date(),
+      },
+    ],
+    inquiry: [
+      {
+        id: '7',
+        role: 'system',
+        content: '問い合わせ対応エージェントです。顧客からの質問に対する回答案を作成します。問い合わせ内容を教えてください。',
+        timestamp: new Date(),
+      },
+    ],
+    proposal: [
+      {
+        id: '8',
+        role: 'system',
+        content: '提案資料作成エージェントです。顧客ニーズに合わせた提案書を自動生成します。顧客情報と提案内容を教えてください。',
+        timestamp: new Date(),
+      },
+    ],
+    coach: [
+      {
+        id: '9',
+        role: 'system',
+        content: '営業コーチエージェントです。営業活動のアドバイスやベストプラクティスを提供します。現在の状況や課題を教えてください。',
         timestamp: new Date(),
       },
     ],
