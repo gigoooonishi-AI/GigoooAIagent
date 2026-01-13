@@ -19,10 +19,7 @@ sales = SalesFeatures(client)
 
 # エージェントごとのシステムプロンプト
 AGENT_PROMPTS = {
-    'general': '汎用AIアシスタントとして、一般的な質問に丁寧に回答してください。',
-    'code': '営業担当として、顧客とのやり取りをサポートします。プロフェッショナルで親しみやすい対応を心がけてください。',
     'analysis': '社内スキル検索の専門家として、スキルシートを参照しながら適切な人材を提案してください。',
-    'creative': 'クリエイティブなコンテンツ生成の専門家として、創造的で魅力的なアイデアを提供してください。',
     'leads': '見込み客管理の専門家として、リード情報を分析し、優先度判定、ネクストアクション、フォローアップ計画を提案してください。具体的で実行可能なアドバイスを提供してください。',
     'progress': '営業進捗管理の専門家として、案件の進捗状況を分析し、ボトルネックの特定、次のステップ提案、リスク対策を提供してください。',
     'inquiry': 'カスタマーサポートの専門家として、顧客からの問い合わせに対してプロフェッショナルで親しみやすい回答を作成してください。明確で有益な情報を提供してください。',
@@ -40,14 +37,14 @@ def chat():
     """チャットエンドポイント"""
     try:
         data = request.json
-        agent_id = data.get('agent_id', 'general')
+        agent_id = data.get('agent_id', 'analysis')
         messages = data.get('messages', [])
 
         if not messages:
             return jsonify({'error': 'メッセージが必要です'}), 400
 
         # システムプロンプトを追加
-        system_prompt = AGENT_PROMPTS.get(agent_id, AGENT_PROMPTS['general'])
+        system_prompt = AGENT_PROMPTS.get(agent_id, AGENT_PROMPTS['analysis'])
 
         # OpenAI APIに送信するメッセージを構築
         api_messages = [{'role': 'system', 'content': system_prompt}]
@@ -91,10 +88,7 @@ def chat():
 def get_agents():
     """利用可能なエージェントのリストを返す"""
     agents = [
-        {'id': 'general', 'name': '汎用AI', 'description': '一般的な質問に対応'},
-        {'id': 'code', 'name': '営業', 'description': '顧客とのやり取り'},
         {'id': 'analysis', 'name': '社内スキル検索', 'description': 'スキルシート参照'},
-        {'id': 'creative', 'name': 'クリエイティブ', 'description': '創造的なコンテンツ生成'},
         {'id': 'leads', 'name': '見込み客管理', 'description': '優先度分析・アクション提案'},
         {'id': 'progress', 'name': '進捗管理', 'description': 'ボトルネック特定・対策提案'},
         {'id': 'inquiry', 'name': '問い合わせ対応', 'description': '回答案自動作成'},
