@@ -170,15 +170,119 @@
 .input-wrapper {
   max-width: 768px;
   margin: 0 auto;
-  position: relative;
+  background-color: #40414f;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ファイルプレビューエリア */
+.file-preview-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 12px 0 12px;
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #565869;
+  border-radius: 8px;
+  padding: 8px 12px;
+  max-width: 200px;
+}
+
+.file-preview-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.file-preview-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background-color: #40414f;
+  border-radius: 4px;
+}
+
+.file-preview-name {
+  flex: 1;
+  font-size: 12px;
+  color: #ececf1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-remove-button {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ececf1;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.file-remove-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 入力行 */
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+
+.file-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #8e8ea0;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.file-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ececf1;
+}
+
+.file-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .chat-input {
-  width: 100%;
-  padding: 16px 52px 16px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  background-color: #40414f;
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background-color: transparent;
   color: #ececf1;
   font-size: 16px;
   resize: none;
@@ -191,25 +295,20 @@
   color: #8e8ea0;
 }
 
-.chat-input:focus {
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
 .send-button {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background-color: #10a37f;
   color: white;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .send-button:disabled {
@@ -296,6 +395,275 @@
 
 .status-dot.active {
   background-color: #10a37f;
+}
+
+/* ========================================
+   モーダル・ダッシュボード（モノクロモダン）
+   ======================================== */
+
+/* オーバーレイ背景 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+  animation: overlayFadeIn 0.3s ease-out forwards;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes overlayFadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* モーダルコンテンツ */
+.modal-content {
+  background-color: #0a0a0a;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 1200px;
+  height: 90%;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 25px 50px rgba(0, 0, 0, 0.8);
+  cursor: default;
+  animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ダッシュボードヘッダー */
+.dashboard-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0a0a0a;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-close-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.dashboard-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* ダッシュボード本体 */
+.dashboard-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background-color: #0a0a0a;
+}
+
+/* サイドメニュー */
+.dashboard-sidebar {
+  width: 260px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: #0a0a0a;
+}
+
+.dashboard-menu-btn {
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.dashboard-menu-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+}
+
+.dashboard-menu-btn.active {
+  background-color: #fff;
+  color: #000;
+  font-weight: 600;
+}
+
+.dashboard-menu-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background-color: #000;
+  border-radius: 0 2px 2px 0;
+  display: none;
+}
+
+/* メインコンテンツ */
+.dashboard-main {
+  flex: 1;
+  padding: 28px;
+  overflow-y: auto;
+  background-color: #111;
+}
+
+/* スクロールバー（ダッシュボード用） */
+.dashboard-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.dashboard-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* フォームセクション */
+.dashboard-main h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+/* 入力フィールド（ダッシュボード用） */
+.dashboard-main input,
+.dashboard-main textarea {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.dashboard-main input::placeholder,
+.dashboard-main textarea::placeholder {
+  color: #555;
+}
+
+.dashboard-main input:focus,
+.dashboard-main textarea:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-main textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ボタン（ダッシュボード用） */
+.dashboard-main button {
+  padding: 14px 28px;
+  background-color: #fff;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-main button:hover:not(:disabled) {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+.dashboard-main button:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* 結果エリア */
+.dashboard-result {
+  margin-top: 28px;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-result h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-result-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #e5e5e5;
+  white-space: pre-wrap;
 }
 
 .status-dot.idle {
