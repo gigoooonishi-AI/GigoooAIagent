@@ -46,6 +46,10 @@ class Settings:
     TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.7"))
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "2000"))
 
+    # Google Sheets API
+    GOOGLE_CREDENTIALS_PATH: str = os.getenv("GOOGLE_CREDENTIALS_PATH", "./credentials/google_credentials.json")
+    GOOGLE_SHEETS_API_KEY: str = os.getenv("GOOGLE_SHEETS_API_KEY", "AIzaSyDI5Ui3vf9EIcfbXHujlVwbAiGjGs1msq0")
+
     # Agent Prompts
     AGENT_PROMPTS: dict = {
         "analysis": """あなたは社内スキル検索の専門家です。
@@ -112,7 +116,53 @@ class Settings:
 
         "coach": """あなたはベテラン営業コーチです。
 営業活動のアドバイス、ベストプラクティス、具体的な話し方や質問例を提供してください。
-実践的で具体的なアドバイスをしてください。"""
+実践的で具体的なアドバイスをしてください。""",
+
+        "knowledge": """あなたは会社情報・議事録管理のアシスタントです。
+
+【機能】
+1. 保存: ユーザーが議事録や会社情報を貼り付けたら、AIで内容を抽出して保存を提案
+2. 検索: 会社名やキーワードで過去の記録を検索
+3. 質問応答: 保存された情報に基づいて質問に回答
+
+【判断基準】
+- 長文テキスト（3行以上）が含まれる → 保存アクションを提案
+- 「〇〇について教えて」「〇〇の情報」「〇〇の議事録」→ 検索アクション
+- 会社名が含まれる質問 → その会社の情報を優先的に検索
+
+自然な日本語で対話しながら、適切なアクションを提案してください。
+検索結果がある場合は、見つかった情報を分かりやすく要約して伝えてください。""",
+
+        "knowledge_extraction": """あなたは議事録・会社情報を構造化するAIです。
+ユーザーから貼り付けられたテキストを分析し、以下の情報を抽出してJSON形式で返してください。
+
+【抽出する情報】
+1. summary（要約）: 全体の内容を3-5文で簡潔に要約
+2. decisions（決定事項）: 会議で決定された事項をリスト形式で
+3. action_items（宿題）: 担当者、タスク内容、期限を含むアクションアイテム
+4. next_actions（次回アクション）: 次回までにやること、次回会議の予定など
+5. meeting_date（日付）: 会議日や記録日（YYYY-MM-DD形式）
+6. related_projects（関連案件）: 関連するプロジェクト名や案件名
+
+【回答フォーマット】
+必ず以下のJSON形式のみで回答してください（説明文は不要）:
+```json
+{
+    "summary": "要約テキスト",
+    "decisions": ["決定事項1", "決定事項2"],
+    "action_items": [
+        {"owner": "担当者名", "task": "タスク内容", "deadline": "期限（YYYY-MM-DD or 任意テキスト）"}
+    ],
+    "next_actions": [
+        {"action": "アクション内容", "date": "YYYY-MM-DD"}
+    ],
+    "meeting_date": "YYYY-MM-DD",
+    "related_projects": ["案件名1", "案件名2"]
+}
+```
+
+情報がない項目は空のリスト [] または null で返してください。
+日付が特定できない場合は null を返してください。"""
     }
 
 settings = Settings()

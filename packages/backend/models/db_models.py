@@ -377,3 +377,67 @@ class WonProposal(Base):
     deal = relationship("Deal", backref="won_record")
 
 
+# ========== 会社ナレッジベース ==========
+
+class SimpleUser(Base):
+    """シンプルユーザー（認証なし、ドロップダウン選択用）"""
+    __tablename__ = "simple_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    department = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ImportedSpreadsheet(Base):
+    """インポート済みスプレッドシート"""
+    __tablename__ = "imported_spreadsheets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spreadsheet_url = Column(String(500), nullable=False)  # 完全なURL
+    spreadsheet_id = Column(String(100), nullable=False, index=True)  # スプレッドシートID
+    sheet_name = Column(String(200))  # シート名
+    columns = Column(JSON)  # カラム一覧
+    data = Column(JSON)  # データ（JSON形式）
+    total_rows = Column(Integer, default=0)  # 行数
+    auto_refresh = Column(Boolean, default=True)  # 自動更新有効
+    refresh_interval_minutes = Column(Integer, default=30)  # 更新間隔（分）
+    last_synced_at = Column(DateTime(timezone=True))  # 最終同期日時
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class CompanyMemo(Base):
+    """会社メモ・議事録"""
+    __tablename__ = "company_memos"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 会社情報（Leadとの連携）
+    lead_id = Column(Integer, ForeignKey("leads.id"), nullable=True)
+    company_name = Column(String(200), nullable=False, index=True)
+
+    # 原文
+    original_text = Column(Text, nullable=False)
+
+    # AI抽出フィールド
+    summary = Column(Text)  # 要約
+    decisions = Column(JSON)  # 決定事項 ["item1", "item2", ...]
+    action_items = Column(JSON)  # 宿題 [{"owner": "name", "task": "content", "deadline": "date"}, ...]
+    next_actions = Column(JSON)  # 次回アクション [{"action": "content", "date": "YYYY-MM-DD"}, ...]
+    meeting_date = Column(Date)  # 日付
+    related_projects = Column(JSON)  # 関連案件 ["project1", "project2", ...]
+
+    # メタデータ
+    memo_type = Column(String(50), default="meeting_note")  # meeting_note, company_info, general
+    registered_user_name = Column(String(100))  # 登録ユーザー名
+
+    # タイムスタンプ
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # リレーション
+    lead = relationship("Lead", backref="memos")
+
+

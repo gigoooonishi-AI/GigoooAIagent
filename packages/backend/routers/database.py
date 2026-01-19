@@ -52,6 +52,11 @@ class LeadBase(BaseModel):
     next_action: Optional[str] = None
     next_action_date: Optional[datetime] = None
     assigned_to: Optional[int] = None
+    # 追加フィールド
+    industry: Optional[str] = None
+    company_size: Optional[str] = None
+    score: Optional[int] = 50
+    temperature: Optional[str] = "warm"
 
 
 class LeadCreate(LeadBase):
@@ -60,6 +65,8 @@ class LeadCreate(LeadBase):
 
 class LeadResponse(LeadBase):
     id: int
+    last_contact_date: Optional[datetime] = None
+    lost_reason: Optional[str] = None
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 

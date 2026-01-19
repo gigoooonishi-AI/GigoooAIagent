@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from config import settings
-from routers import chat, sales, documents, database, chat_history, proposals, coach, alerts
+from routers import chat, sales, documents, database, chat_history, proposals, coach, alerts, knowledge_base, spreadsheet
 from models.schemas import HealthResponse, AgentsResponse, AgentInfo
 from database import init_db
 
@@ -33,6 +33,8 @@ app.include_router(chat_history.router, prefix="/api/history", tags=["Chat Histo
 app.include_router(proposals.router, prefix="/api/proposals", tags=["Proposals"])
 app.include_router(coach.router, prefix="/api/coach", tags=["Coach"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["Alerts"])
+app.include_router(knowledge_base.router, tags=["Knowledge Base"])
+app.include_router(spreadsheet.router, prefix="/api/spreadsheet", tags=["Spreadsheet"])
 
 
 @app.get("/api/health", response_model=HealthResponse)
@@ -54,6 +56,7 @@ async def get_agents():
         AgentInfo(id="inquiry", name="問い合わせ対応", description="回答案自動作成"),
         AgentInfo(id="proposal", name="提案資料作成", description="提案書の自動生成"),
         AgentInfo(id="coach", name="営業コーチ", description="アドバイス・ベストプラクティス"),
+        AgentInfo(id="knowledge", name="会社ナレッジベース", description="議事録・会社情報の保存・検索"),
     ]
     return AgentsResponse(agents=agents)
 

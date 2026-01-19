@@ -1,6 +1,8 @@
 """LLMサービス（OpenAI SDK直接使用版）"""
 from typing import AsyncGenerator, List, Optional
 import asyncio
+import json
+import re
 from openai import AsyncOpenAI
 
 from config import settings
@@ -272,6 +274,68 @@ class LLMService:
 現在の状況: {data.get('situation', '')}{question_text}
 
 実践的で具体的なアドバイスをお願いします。"""
+
+    async def extract_memo_info(self, text: str) -> dict:
+        """議事録・メモから構造化情報を抽出"""
+        # モックモードの場合
+        if self.is_mock_mode:
+            return {
+                "summary": "モックモード: テスト用の要約です。会議では重要な決定がなされました。",
+                "decisions": ["テスト決定事項1", "テスト決定事項2"],
+                "action_items": [
+                    {"owner": "田中", "task": "資料作成", "deadline": "来週金曜"}
+                ],
+                "next_actions": [
+                    {"action": "次回会議設定", "date": None}
+                ],
+                "meeting_date": None,
+                "related_projects": ["テストプロジェクト"]
+            }
+
+        system_prompt = settings.AGENT_PROMPTS.get("knowledge_extraction", "")
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": text}
+        ]
+
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=0.3,  # 抽出タスクは低めの温度で
+            max_tokens=2000,
+        )
+
+        content = response.choices[0].message.content
+
+        # JSONを抽出（```json ... ``` のブロックから取り出す）
+        json_match = re.search(r'```json\s*([\s\S]*?)\s*```', content)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            # マークダウンブロックがない場合、全体をJSONとして解釈
+            json_str = content
+
+        try:
+            result = json.loads(json_str)
+            return {
+                "summary": result.get("summary", ""),
+                "decisions": result.get("decisions", []),
+                "action_items": result.get("action_items", []),
+                "next_actions": result.get("next_actions", []),
+                "meeting_date": result.get("meeting_date"),
+                "related_projects": result.get("related_projects", [])
+            }
+        except json.JSONDecodeError:
+            # JSON解析に失敗した場合、最小限の結果を返す
+            return {
+                "summary": content[:500] if len(content) > 500 else content,
+                "decisions": [],
+                "action_items": [],
+                "next_actions": [],
+                "meeting_date": None,
+                "related_projects": []
+            }
 
 
 # シングルトンインスタンス

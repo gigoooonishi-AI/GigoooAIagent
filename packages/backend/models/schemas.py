@@ -12,6 +12,7 @@ class AgentType(str, Enum):
     INQUIRY = "inquiry"
     PROPOSAL = "proposal"
     COACH = "coach"
+    KNOWLEDGE = "knowledge"
 
 
 class MessageRole(str, Enum):
@@ -745,3 +746,130 @@ class AutoQuoteResponse(BaseModel):
     discount_suggestion: Optional[float] = None
     total: Optional[float] = None
     rationale: Optional[str] = None  # 見積根拠
+
+
+# ========== Knowledge Base (会社ナレッジベース) ==========
+
+class MemoType(str, Enum):
+    """メモタイプ"""
+    MEETING_NOTE = "meeting_note"
+    COMPANY_INFO = "company_info"
+    GENERAL = "general"
+
+
+class ActionItemSchema(BaseModel):
+    """アクションアイテム"""
+    owner: Optional[str] = None
+    task: str
+    deadline: Optional[str] = None
+
+
+class NextActionSchema(BaseModel):
+    """次回アクション"""
+    action: str
+    date: Optional[str] = None
+
+
+class AIExtractionResult(BaseModel):
+    """AI抽出結果"""
+    summary: str
+    decisions: List[str] = []
+    action_items: List[ActionItemSchema] = []
+    next_actions: List[NextActionSchema] = []
+    meeting_date: Optional[str] = None
+    related_projects: List[str] = []
+
+
+class CompanyMemoCreate(BaseModel):
+    """メモ作成リクエスト"""
+    company_name: str
+    original_text: str
+    memo_type: str = "meeting_note"
+    registered_user_name: str
+    lead_id: Optional[int] = None
+
+
+class CompanyMemoUpdate(BaseModel):
+    """メモ更新リクエスト"""
+    company_name: Optional[str] = None
+    original_text: Optional[str] = None
+    summary: Optional[str] = None
+    decisions: Optional[List[str]] = None
+    action_items: Optional[List[dict]] = None
+    next_actions: Optional[List[dict]] = None
+    meeting_date: Optional[str] = None
+    related_projects: Optional[List[str]] = None
+    memo_type: Optional[str] = None
+
+
+class CompanyMemoResponse(BaseModel):
+    """メモレスポンス"""
+    id: int
+    company_name: str
+    original_text: str
+    summary: Optional[str] = None
+    decisions: Optional[List[str]] = None
+    action_items: Optional[List[dict]] = None
+    next_actions: Optional[List[dict]] = None
+    meeting_date: Optional[str] = None
+    related_projects: Optional[List[str]] = None
+    memo_type: str
+    registered_user_name: Optional[str] = None
+    lead_id: Optional[int] = None
+    created_at: str
+    updated_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class MemoSearchRequest(BaseModel):
+    """メモ検索リクエスト"""
+    query: Optional[str] = None
+    company_name: Optional[str] = None
+    memo_type: Optional[str] = None
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    limit: int = 50
+
+
+class KnowledgeChatRequest(BaseModel):
+    """ナレッジベースチャットリクエスト"""
+    message: str
+    user_name: str
+    action: str = "auto"  # auto, save, search
+
+
+class KnowledgeChatResponse(BaseModel):
+    """ナレッジベースチャットレスポンス"""
+    success: bool
+    message: str
+    action_performed: str  # saved, searched, answered
+    extraction: Optional[AIExtractionResult] = None
+    memos: Optional[List[CompanyMemoResponse]] = None
+
+
+class SimpleUserCreate(BaseModel):
+    """シンプルユーザー作成"""
+    name: str
+    department: Optional[str] = None
+
+
+class SimpleUserResponse(BaseModel):
+    """シンプルユーザーレスポンス"""
+    id: int
+    name: str
+    department: Optional[str] = None
+    is_active: bool = True
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class CompanyListItem(BaseModel):
+    """会社一覧アイテム"""
+    company_name: str
+    source: str  # lead, memo
+    lead_id: Optional[int] = None
+    memo_count: int = 0

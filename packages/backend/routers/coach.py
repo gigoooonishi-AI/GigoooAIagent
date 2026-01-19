@@ -17,10 +17,15 @@ from models.schemas import (
 )
 from services.llm_service import LLMService
 from openai import OpenAI
+from config import settings
 
 router = APIRouter()
 llm_service = LLMService()
-openai_client = OpenAI()
+
+# OpenAI クライアント初期化（APIキーがある場合のみ）
+openai_client = None
+if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "your_openai_api_key_here":
+    openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # ========== 商談ログAPI ==========

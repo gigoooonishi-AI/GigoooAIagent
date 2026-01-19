@@ -1026,11 +1026,18 @@ async def export_proposal_pdf(proposal_id: int, db: Session = Depends(get_db)):
         doc.build(elements)
         buffer.seek(0)
 
-        filename = f"proposal_{proposal_id}_{proposal.title[:20]}.pdf"
+        # ファイル名のエンコード（日本語対応）
+        from urllib.parse import quote
+        safe_title = quote(proposal.title[:20], safe='')
+        filename_ascii = f"proposal_{proposal_id}.pdf"
+        filename_utf8 = f"proposal_{proposal_id}_{proposal.title[:20]}.pdf"
+
         return StreamingResponse(
             buffer,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{filename_ascii}\"; filename*=UTF-8''{quote(filename_utf8)}"
+            }
         )
 
     except ImportError:
@@ -1217,14 +1224,362 @@ async def export_proposal_pptx(proposal_id: int, db: Session = Depends(get_db)):
         prs.save(buffer)
         buffer.seek(0)
 
-        filename = f"proposal_{proposal_id}_{proposal.title[:20]}.pptx"
+        # ファイル名のエンコード（日本語対応）
+        from urllib.parse import quote
+        filename_ascii = f"proposal_{proposal_id}.pptx"
+        filename_utf8 = f"proposal_{proposal_id}_{proposal.title[:20]}.pptx"
+
         return StreamingResponse(
             buffer,
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{filename_ascii}\"; filename*=UTF-8''{quote(filename_utf8)}"
+            }
         )
 
     except ImportError:
         raise HTTPException(status_code=500, detail="PowerPoint library not installed. Run: pip install python-pptx")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PowerPoint generation failed: {str(e)}")
+
+
+# ========== プレビューAPI ==========
+
+@router.get("/{proposal_id}/preview/pdf")
+async def preview_proposal_pdf(proposal_id: int, db: Session = Depends(get_db)):
+    """提案書PDFプレビュー（ブラウザ内表示）"""
+    from fastapi.responses import StreamingResponse
+    from io import BytesIO
+
+    proposal = db.query(Proposal).filter(Proposal.id == proposal_id).first()
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Proposal not found")
+
+    lead = None
+    if proposal.lead_id:
+        lead = db.query(Lead).filter(Lead.id == proposal.lead_id).first()
+
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
+
+        try:
+            pdfmetrics.registerFont(TTFont('MSGothic', 'C:/Windows/Fonts/msgothic.ttc'))
+            font_name = 'MSGothic'
+        except:
+            font_name = 'Helvetica'
+
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(name='JapaneseTitle', fontName=font_name, fontSize=18, spaceAfter=20, alignment=1))
+        styles.add(ParagraphStyle(name='JapaneseNormal', fontName=font_name, fontSize=10, spaceAfter=10))
+        styles.add(ParagraphStyle(name='JapaneseHeading', fontName=font_name, fontSize=14, spaceAfter=10, spaceBefore=15))
+
+        elements = []
+        elements.append(Paragraph(proposal.title, styles['JapaneseTitle']))
+        elements.append(Spacer(1, 10*mm))
+
+        if lead:
+            elements.append(Paragraph("顧客情報", styles['JapaneseHeading']))
+            customer_data = [
+                ["会社名", lead.company_name or "-"],
+                ["担当者", lead.contact_name or "-"],
+                ["業界", lead.industry or "-"],
+                ["メール", lead.contact_email or "-"],
+            ]
+            customer_table = Table(customer_data, colWidths=[40*mm, 120*mm])
+            customer_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('PADDING', (0, 0), (-1, -1), 5),
+            ]))
+            elements.append(customer_table)
+            elements.append(Spacer(1, 10*mm))
+
+        if proposal.content:
+            content = proposal.content
+            if isinstance(content, dict):
+                for section_key, section_value in content.items():
+                    if section_key != "customer":
+                        elements.append(Paragraph(str(section_key), styles['JapaneseHeading']))
+                        if isinstance(section_value, str):
+                            elements.append(Paragraph(section_value, styles['JapaneseNormal']))
+                        elif isinstance(section_value, list):
+                            for item in section_value:
+                                elements.append(Paragraph(f"・{item}", styles['JapaneseNormal']))
+
+        if proposal.quote:
+            elements.append(Spacer(1, 10*mm))
+            elements.append(Paragraph("見積明細", styles['JapaneseHeading']))
+
+            quote_header = [["項目", "説明", "単価", "数量", "金額"]]
+            quote_rows = []
+            for item in (proposal.quote.items or []):
+                quote_rows.append([
+                    item.get("name", ""),
+                    item.get("description", "")[:20] + "..." if len(item.get("description", "")) > 20 else item.get("description", ""),
+                    f"¥{item.get('unit_price', 0):,.0f}",
+                    str(item.get("quantity", 1)),
+                    f"¥{item.get('amount', 0):,.0f}"
+                ])
+
+            quote_data = quote_header + quote_rows
+            quote_table = Table(quote_data, colWidths=[35*mm, 50*mm, 30*mm, 20*mm, 35*mm])
+            quote_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('PADDING', (0, 0), (-1, -1), 5),
+            ]))
+            elements.append(quote_table)
+
+            elements.append(Spacer(1, 5*mm))
+            summary_data = [
+                ["小計", f"¥{float(proposal.quote.subtotal or 0):,.0f}"],
+                [f"割引 ({float(proposal.quote.discount_rate or 0):.1f}%)", f"-¥{float(proposal.quote.subtotal or 0) * float(proposal.quote.discount_rate or 0) / 100:,.0f}"],
+                [f"消費税 ({float(proposal.quote.tax_rate or 10):.0f}%)", f"¥{(float(proposal.quote.subtotal or 0) * (1 - float(proposal.quote.discount_rate or 0) / 100)) * float(proposal.quote.tax_rate or 10) / 100:,.0f}"],
+                ["合計", f"¥{float(proposal.quote.total or 0):,.0f}"],
+            ]
+            summary_table = Table(summary_data, colWidths=[130*mm, 40*mm])
+            summary_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+                ('FONTSIZE', (0, -1), (-1, -1), 12),
+            ]))
+            elements.append(summary_table)
+
+        doc.build(elements)
+        buffer.seek(0)
+
+        # インライン表示（プレビュー用）
+        return StreamingResponse(
+            buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "inline"}
+        )
+
+    except ImportError:
+        raise HTTPException(status_code=500, detail="PDF library not installed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF preview failed: {str(e)}")
+
+
+@router.get("/{proposal_id}/preview/html")
+async def preview_proposal_html(proposal_id: int, db: Session = Depends(get_db)):
+    """提案書HTMLプレビュー"""
+    from fastapi.responses import HTMLResponse
+
+    proposal = db.query(Proposal).filter(Proposal.id == proposal_id).first()
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Proposal not found")
+
+    lead = None
+    if proposal.lead_id:
+        lead = db.query(Lead).filter(Lead.id == proposal.lead_id).first()
+
+    # HTMLプレビュー生成
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{proposal.title} - プレビュー</title>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{
+                font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+                background: #f5f5f5;
+                padding: 20px;
+            }}
+            .slide {{
+                background: white;
+                width: 100%;
+                max-width: 960px;
+                margin: 0 auto 30px;
+                padding: 60px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                aspect-ratio: 16/9;
+                display: flex;
+                flex-direction: column;
+            }}
+            .slide-title {{
+                background: linear-gradient(135deg, #1a1a2e, #16213e);
+                color: white;
+                text-align: center;
+                justify-content: center;
+                align-items: center;
+            }}
+            .slide-title h1 {{ font-size: 2.5em; margin-bottom: 20px; }}
+            .slide-title .company {{ font-size: 1.5em; color: #aaa; }}
+            .slide-title .date {{ font-size: 1em; color: #888; margin-top: 40px; }}
+            .slide-content {{ padding: 20px 0; }}
+            .slide-content h2 {{
+                font-size: 1.8em;
+                color: #1a1a2e;
+                border-bottom: 3px solid #4CAF50;
+                padding-bottom: 10px;
+                margin-bottom: 30px;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }}
+            th, td {{
+                padding: 12px 15px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }}
+            th {{
+                background: #1a1a2e;
+                color: white;
+            }}
+            tr:nth-child(even) {{ background: #f9f9f9; }}
+            .summary {{ margin-top: 20px; text-align: right; }}
+            .summary .total {{ font-size: 1.5em; font-weight: bold; color: #1a1a2e; }}
+            ul {{ list-style: none; }}
+            ul li {{
+                padding: 10px 0;
+                padding-left: 25px;
+                position: relative;
+            }}
+            ul li::before {{
+                content: "✓";
+                position: absolute;
+                left: 0;
+                color: #4CAF50;
+                font-weight: bold;
+            }}
+            .nav {{
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                gap: 10px;
+            }}
+            .nav button {{
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background: #1a1a2e;
+                color: white;
+                cursor: pointer;
+            }}
+            .nav button:hover {{ background: #16213e; }}
+        </style>
+    </head>
+    <body>
+        <!-- タイトルスライド -->
+        <div class="slide slide-title">
+            <h1>{proposal.title}</h1>
+            <div class="company">{lead.company_name if lead else ''} 御中</div>
+            <div class="date">{datetime.now().strftime('%Y年%m月%d日')}</div>
+        </div>
+    """
+
+    # 顧客情報スライド
+    if lead:
+        html_content += f"""
+        <div class="slide slide-content">
+            <h2>顧客概要</h2>
+            <table>
+                <tr><th>項目</th><th>内容</th></tr>
+                <tr><td>会社名</td><td>{lead.company_name or '-'}</td></tr>
+                <tr><td>担当者</td><td>{lead.contact_name or '-'}</td></tr>
+                <tr><td>業界</td><td>{lead.industry or '-'}</td></tr>
+                <tr><td>企業規模</td><td>{lead.company_size or '-'}</td></tr>
+                <tr><td>想定金額</td><td>¥{lead.estimated_value:,.0f}</td></tr>
+            </table>
+        </div>
+        """
+
+    # 提案内容スライド
+    if proposal.content:
+        content = proposal.content
+        if isinstance(content, dict):
+            for section_key, section_value in content.items():
+                if section_key not in ["customer", "quote"]:
+                    html_content += f"""
+                    <div class="slide slide-content">
+                        <h2>{section_key}</h2>
+                    """
+                    if isinstance(section_value, str):
+                        html_content += f"<p>{section_value}</p>"
+                    elif isinstance(section_value, list):
+                        html_content += "<ul>"
+                        for item in section_value:
+                            html_content += f"<li>{item}</li>"
+                        html_content += "</ul>"
+                    html_content += "</div>"
+
+    # 見積スライド
+    if proposal.quote and proposal.quote.items:
+        html_content += """
+        <div class="slide slide-content">
+            <h2>お見積り</h2>
+            <table>
+                <tr><th>項目</th><th>単価</th><th>数量</th><th>金額</th></tr>
+        """
+        for item in proposal.quote.items:
+            html_content += f"""
+                <tr>
+                    <td>{item.get('name', '')}</td>
+                    <td style="text-align:right">¥{item.get('unit_price', 0):,.0f}</td>
+                    <td style="text-align:center">{item.get('quantity', 1)}</td>
+                    <td style="text-align:right">¥{item.get('amount', 0):,.0f}</td>
+                </tr>
+            """
+        html_content += f"""
+            </table>
+            <div class="summary">
+                <p>小計: ¥{float(proposal.quote.subtotal or 0):,.0f}</p>
+                <p>消費税: ¥{(float(proposal.quote.subtotal or 0) * float(proposal.quote.tax_rate or 10) / 100):,.0f}</p>
+                <p class="total">合計: ¥{float(proposal.quote.total or 0):,.0f}</p>
+            </div>
+        </div>
+        """
+
+    html_content += f"""
+        <div class="nav">
+            <button onclick="window.print()">🖨️ 印刷</button>
+            <a href="/api/proposals/{proposal_id}/export/pdf" class="nav-link" download>📄 PDF</a>
+            <a href="/api/proposals/{proposal_id}/export/pptx" class="nav-link" download>📽️ PPTX</a>
+            <button onclick="window.close()">✕ 閉じる</button>
+        </div>
+        <style>
+            .nav-link {{
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background: #4CAF50;
+                color: white;
+                cursor: pointer;
+                text-decoration: none;
+                font-size: 14px;
+            }}
+            .nav-link:hover {{ background: #45a049; }}
+        </style>
+    </body>
+    </html>
+    """
+
+    return HTMLResponse(content=html_content)
